@@ -15,6 +15,7 @@ const assignmentService = require('./services/assignmentService')
 // ── Routes modular (cara baru, untuk fitur dashboard) ────────
 const dashboardRoutes = require('./routes/dashboardRoutes')
 const assignmentRoutes = require('./routes/assignmentRoutes')
+const financeRoutes = require('./routes/financeRoutes')
 
 app.use(cors())
 app.use(express.json())
@@ -87,6 +88,7 @@ app.get('/drivers', async (req, res) => {
    DASHBOARD  ← TAMBAHAN BARU
 ========================= */
 app.use('/dashboard', dashboardRoutes)
+app.use('/finances', financeRoutes)
 /* =========================
    ASSIGNMENTS (MODULAR)
 ========================= */

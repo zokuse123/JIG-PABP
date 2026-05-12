@@ -49,9 +49,15 @@ export const carApi = {
   update: (id, data)   => api.put(`/cars/${id}`, data),
 };
 
+// â”€â”€â”€ FINANCE API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export const financeApi = {
+  getAll: ()           => api.get("/finances"),
+};
+
 export default api;
 
 // ─── DASHBOARD API ─────────────────────────────────────────────
 export const dashboardApi = {
   getSummary: () => api.get("/dashboard"),
+  getDetail: () => api.get("/dashboard/detail"),
 };

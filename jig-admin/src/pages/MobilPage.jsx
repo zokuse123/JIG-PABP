@@ -1,19 +1,63 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import StatCard from "../components/StatCard";
 import FormField from "../components/FormField";
 import { STATUS_CAR } from "../data/dummy";
+import { carApi } from "../utils/api";
 
-export default function MobilPage({ cars, updateCar }) {
+const mapCarFromApi = (c) => ({
+  id: c.id,
+  name: c.nama_grup || "",
+  type: c.plat_nomor || "-",
+  year: "-",
+  label: c.is_external ? "external" : "internal",
+  status: c.status || "available",
+  driver: c.driver || "",
+});
+
+const mapCarToApi = (form) => ({
+  nama_grup: form.name,
+  plat_nomor: form.type,
+  is_external: form.label === "external",
+  status: form.status,
+});
+
+const getCarRows = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.cars)) return res.cars;
+  return [];
+};
+
+export default function MobilPage() {
+  const [cars, setCars] = useState([]);
   const [modal, setModal] = useState(null);
-  const [form, setForm]   = useState({});
+  const [form, setForm] = useState({});
 
-  const openEdit = (c) => { setForm({ ...c }); setModal(c.id); };
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const res = await carApi.getAll();
+        setCars(getCarRows(res).map(mapCarFromApi));
+      } catch (err) {
+        console.error("Gagal mengambil data mobil:", err.message);
+        setCars([]);
+      }
+    };
+
+    fetchCars();
+  }, []);
+
+  const openEdit = (c) => {
+    setForm({ ...c });
+    setModal(c.id);
+  };
 
   const handleSave = async () => {
-    await updateCar(modal, form);
+    await carApi.update(modal, mapCarToApi(form));
+    setCars((prev) => prev.map((c) => (c.id === modal ? { ...form } : c)));
     setModal(null);
   };
 
@@ -25,9 +69,9 @@ export default function MobilPage({ cars, updateCar }) {
 
       {/* Stat mini */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 22 }}>
-        <StatCard icon="✅" label="Tersedia"    value={count("available")}   color="#16a34a" />
-        <StatCard icon="🚗" label="Dalam Trip"  value={count("on_trip")}     color="#2563eb" />
-        <StatCard icon="🔧" label="Perawatan"   value={count("maintenance")} color="#d97706" />
+        <StatCard icon="✅" label="Tersedia" value={count("available")} color="#16a34a" />
+        <StatCard icon="🚗" label="Dalam Trip" value={count("on_trip")} color="#2563eb" />
+        <StatCard icon="🔧" label="Perawatan" value={count("maintenance")} color="#d97706" />
       </div>
 
       {/* Car grid */}
@@ -38,9 +82,11 @@ export default function MobilPage({ cars, updateCar }) {
               <div style={{ fontWeight: 700, fontSize: 15 }}>{c.name}</div>
               <Badge status={c.status} map={STATUS_CAR} />
             </div>
+
             <div style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
               Tipe: <strong>{c.type}</strong> · Tahun <strong>{c.year}</strong>
             </div>
+
             <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
               <span
                 style={{
@@ -54,10 +100,12 @@ export default function MobilPage({ cars, updateCar }) {
               >
                 {c.label === "internal" ? "🏠 Internal" : "🌐 External"}
               </span>
+
               {c.driver && (
                 <span style={{ fontSize: 12, color: "#94a3b8" }}>👤 {c.driver}</span>
               )}
             </div>
+
             <button
               onClick={() => openEdit(c)}
               style={{
@@ -84,6 +132,7 @@ export default function MobilPage({ cars, updateCar }) {
         <Modal title="Edit Mobil" onClose={() => setModal(null)} width={420}>
           <div style={{ display: "grid", gap: 12 }}>
             <FormField label="Nama Mobil" value={form.name || ""} onChange={(v) => setForm((f) => ({ ...f, name: v }))} />
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <FormField
                 label="Status"
@@ -92,6 +141,7 @@ export default function MobilPage({ cars, updateCar }) {
                 onChange={(v) => setForm((f) => ({ ...f, status: v }))}
                 options={Object.entries(STATUS_CAR).map(([k, v]) => [k, v.label])}
               />
+
               <FormField
                 label="Label"
                 type="select"
@@ -100,8 +150,10 @@ export default function MobilPage({ cars, updateCar }) {
                 options={[["internal", "🏠 Internal"], ["external", "🌐 External"]]}
               />
             </div>
+
             <FormField label="Driver (jika ada)" value={form.driver || ""} onChange={(v) => setForm((f) => ({ ...f, driver: v }))} placeholder="Kosongkan jika tidak ada" />
           </div>
+
           <div style={{ marginTop: 18, display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <button
               onClick={() => setModal(null)}
@@ -109,6 +161,7 @@ export default function MobilPage({ cars, updateCar }) {
             >
               Batal
             </button>
+
             <button
               onClick={handleSave}
               style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 9, padding: "9px 20px", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
