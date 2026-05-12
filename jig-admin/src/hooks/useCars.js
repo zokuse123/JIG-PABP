@@ -1,25 +1,48 @@
-import { useState, useCallback } from "react";
-import { DUMMY_CARS } from "../data/dummy";
+import { useState, useCallback, useEffect } from "react";
 import { carApi } from "../utils/api";
+
+const getCarRows = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.cars)) return res.cars;
+  return [];
+};
+
+const mapCarFromApi = (c) => ({
+  id: c.id,
+  name: c.name || c.nama_grup || "",
+  nama_grup: c.nama_grup || c.name || "",
+  type: c.type || c.plat_nomor || "-",
+  plat_nomor: c.plat_nomor || c.type || "",
+  year: c.year || "-",
+  label: c.label || (c.is_external ? "external" : "internal"),
+  is_external: Boolean(c.is_external),
+  status: c.status || "available",
+  driver: c.driver || "",
+});
 
 /**
  * Hook untuk state & operasi armada mobil.
  */
 export function useCars() {
-  const [cars, setCars] = useState(DUMMY_CARS);
+  const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchCars = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await carApi.getAll();
-      setCars(data);
+      const res = await carApi.getAll();
+      setCars(getCarRows(res).map(mapCarFromApi));
     } catch {
-      setCars(DUMMY_CARS);
+      setCars([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchCars();
+  }, [fetchCars]);
 
   const updateCar = useCallback(async (id, data) => {
     setCars((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));

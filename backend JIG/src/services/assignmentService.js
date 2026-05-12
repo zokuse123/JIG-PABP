@@ -188,8 +188,9 @@ const assignSimple = async (bookingId) => {
   );
 
   // ── LANGKAH 5: Update status mobil & driver ──────────────────────────────────
-  await db.query('UPDATE cars    SET status = "on_trip" WHERE id = ?', [mobilDipilih.id]);
-  await db.query('UPDATE drivers SET status = "on_trip" WHERE id = ?', [driverDipilih.driver_id]);
+  const resourceStatus = booking.status === 'ongoing' ? 'on_trip' : 'available';
+  await db.query('UPDATE cars    SET status = ? WHERE id = ?', [resourceStatus, mobilDipilih.id]);
+  await db.query('UPDATE drivers SET status = ? WHERE id = ?', [resourceStatus, driverDipilih.driver_id]);
 
   // ── LANGKAH 6: Return response lengkap ───────────────────────────────────────
   return {
@@ -288,9 +289,17 @@ const assignManual = async (bookingId, carId, driverId) => {
   }
 
   // Simpan / update assignment
-  const [existing] = await db.query('SELECT id FROM assignments WHERE booking_id = ?', [bookingId]);
+  const [existing] = await db.query('SELECT id, car_id, driver_id FROM assignments WHERE booking_id = ?', [bookingId]);
 
   if (existing.length > 0) {
+    const previous = existing[0];
+    if (previous.car_id !== Number(carId)) {
+      await db.query('UPDATE cars SET status = "available" WHERE id = ?', [previous.car_id]);
+    }
+    if (previous.driver_id !== Number(driverId)) {
+      await db.query('UPDATE drivers SET status = "available" WHERE id = ?', [previous.driver_id]);
+    }
+
     await db.query(
       'UPDATE assignments SET car_id = ?, driver_id = ? WHERE booking_id = ?',
       [carId, driverId, bookingId]
@@ -302,8 +311,9 @@ const assignManual = async (bookingId, carId, driverId) => {
     );
   }
 
-  await db.query('UPDATE cars    SET status = "on_trip" WHERE id = ?', [carId]);
-  await db.query('UPDATE drivers SET status = "on_trip" WHERE id = ?', [driverId]);
+  const resourceStatus = booking.status === 'ongoing' ? 'on_trip' : 'available';
+  await db.query('UPDATE cars    SET status = ? WHERE id = ?', [resourceStatus, carId]);
+  await db.query('UPDATE drivers SET status = ? WHERE id = ?', [resourceStatus, driverId]);
 
   // Ambil data lengkap
   const [result] = await db.query(

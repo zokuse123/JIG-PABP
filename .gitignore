@@ -1,4 +1,43 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment files
 .env
-build
-dist
+*.env
+
+# Build folders
+build/
+dist/
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android / iOS
+android/.gradle/
+android/app/build/
+ios/Pods/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# Service account / secrets
+service-account.json
+*service-account*.json
+backend JIG/service-account.json
+
+# Optional: ignore all JSON credentials in backend
+backend JIG/*.json

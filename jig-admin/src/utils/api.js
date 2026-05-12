@@ -43,10 +43,18 @@ export const bookingApi = {
   syncFromSheets: ()   => api.get("/sync-bookings"),
 };
 
+export const assignmentApi = {
+  manual: (bookingId, data) => api.post(`/assignments/${bookingId}/manual`, data),
+};
+
 // ─── CAR API ──────────────────────────────────────────────────────────────
 export const carApi = {
   getAll: ()           => api.get("/cars"),
   update: (id, data)   => api.put(`/cars/${id}`, data),
+};
+
+export const driverApi = {
+  getAll: ()           => api.get("/drivers"),
 };
 
 // â”€â”€â”€ FINANCE API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

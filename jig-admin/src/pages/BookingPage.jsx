@@ -5,13 +5,14 @@ import Modal from "../components/Modal";
 import FormField from "../components/FormField";
 import { STATUS_BOOKING } from "../data/dummy";
 import { formatRupiah, formatDate, cekBentrok } from "../utils/format";
-import { bookingApi } from "../utils/api";
+import { bookingApi, driverApi } from "../utils/api";
 
 const EMPTY_FORM = {
   customer: "",
   phone: "",
   date: "",
-  destination: "",
+  time: "08:00",
+  destination: "short",
   car: "",
   driver: "",
   notes: "",
@@ -34,10 +35,13 @@ const mapBookingFromApi = (b) => ({
   customer: b.nama_customer || "",
   phone: b.no_hp_customer || "",
   date: b.tanggal ? String(b.tanggal).slice(0, 10) : "",
+  time: b.jam_mulai ? String(b.jam_mulai).slice(0, 5) : "08:00",
   destination: b.paket || "",
-  car: b.car || "",
-  driver: b.driver || "",
-  notes: b.notes || "",
+  car: b.car_id ? String(b.car_id) : "",
+  driver: b.driver_id ? String(b.driver_id) : "",
+  carName: b.nama_mobil || "",
+  driverName: b.nama_driver || "",
+  notes: b.catatan || "",
   hargaDeal: Number(b.harga_deal) || 0,
   dp: Number(b.dp) || 0,
   feeDriver: Number(b.fee_driver) || 0,
@@ -50,14 +54,25 @@ const mapBookingToApi = (form) => ({
   no_hp_customer: form.phone,
   paket: form.destination,
   tanggal: form.date,
+  jam_mulai: form.time,
+  jumlah_orang: 1,
+  catatan: form.notes,
   status: form.status,
+  car_id: form.car ? Number(form.car) : null,
+  driver_id: form.driver ? Number(form.driver) : null,
   harga_deal: Number(form.hargaDeal) || 0,
+  dp: Number(form.dp) || 0,
+  fee_driver: Number(form.feeDriver) || 0,
+  biaya_tambahan: Number(form.biayaTambahan) || 0,
 });
 
 export default function BookingPage({ cars = [] }) {
   const [bookings, setBookings] = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
@@ -84,6 +99,20 @@ export default function BookingPage({ cars = [] }) {
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
+
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        const res = await driverApi.getAll();
+        const rows = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+        setDrivers(rows);
+      } catch {
+        setDrivers([]);
+      }
+    };
+
+    fetchDrivers();
+  }, []);
 
   const filtered = bookings.filter((b) => {
     const keyword = search.toLowerCase();
@@ -114,23 +143,40 @@ export default function BookingPage({ cars = [] }) {
   const openAdd = () => {
     setForm(EMPTY_FORM);
     setBentrok(false);
+    setError("");
+    setSuccess("");
     setModal({ mode: "add" });
   };
 
-  const openEdit = (b) => {
+  const openEdit = async (b) => {
+    setError("");
+    setSuccess("");
+    let detail = b;
+
+    try {
+      const res = await bookingApi.getById(b.id);
+      detail = mapBookingFromApi(res?.data || res);
+    } catch (err) {
+      setError(err.message || "Gagal mengambil detail booking. Menampilkan data tabel.");
+    }
+
     setForm({
       ...EMPTY_FORM,
-      ...b,
-      hargaDeal: b.hargaDeal,
-      dp: b.dp,
-      feeDriver: b.feeDriver,
-      biayaTambahan: b.biayaTambahan,
+      ...detail,
+      hargaDeal: detail.hargaDeal,
+      dp: detail.dp,
+      feeDriver: detail.feeDriver,
+      biayaTambahan: detail.biayaTambahan,
     });
     setBentrok(false);
     setModal({ mode: "edit", id: b.id });
   };
 
   const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
     try {
       const payload = mapBookingToApi(form);
 
@@ -142,8 +188,11 @@ export default function BookingPage({ cars = [] }) {
 
       setModal(null);
       await fetchBookings();
+      setSuccess("Booking berhasil disimpan.");
     } catch (err) {
       setError(err.message || "Gagal menyimpan booking.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -172,6 +221,12 @@ export default function BookingPage({ cars = [] }) {
           + Tambah Booking
         </button>
       </div>
+
+      {success && (
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 9, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: "#166534", fontWeight: 600 }}>
+          {success}
+        </div>
+      )}
 
       {/* Search */}
       <div style={{ marginBottom: 12 }}>
@@ -250,9 +305,9 @@ export default function BookingPage({ cars = [] }) {
                     <td style={{ padding: "10px 12px", color: "#475569" }}>{b.destination}</td>
                     <td style={{ padding: "10px 12px" }}>
                       <div style={{ fontSize: 12 }}>
-                        {b.car || <span style={{ color: "#94a3b8" }}>Belum assign</span>}
+                        {b.carName || <span style={{ color: "#94a3b8" }}>Belum assign</span>}
                       </div>
-                      {b.driver && <div style={{ fontSize: 11, color: "#94a3b8" }}>{b.driver}</div>}
+                      {b.driverName && <div style={{ fontSize: 11, color: "#94a3b8" }}>{b.driverName}</div>}
                     </td>
                     <td style={{ padding: "10px 12px", fontWeight: 700, color: "#16a34a" }}>
                       {formatRupiah(b.hargaDeal)}
@@ -297,6 +352,12 @@ export default function BookingPage({ cars = [] }) {
           title={modal.mode === "add" ? "Tambah Booking" : "Edit Booking"}
           onClose={() => setModal(null)}
         >
+          {error && (
+            <div style={{ background: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: 9, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#991b1b", fontWeight: 600 }}>
+              {error}
+            </div>
+          )}
+
           {/* Bentrok Warning */}
           {bentrok && (
             <div style={{ background: "#fef9c3", border: "1.5px solid #fde047", borderRadius: 9, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#854d0e", fontWeight: 600 }}>
@@ -308,7 +369,18 @@ export default function BookingPage({ cars = [] }) {
             <FormField label="Nama Customer *" value={form.customer} onChange={(v) => handleFormChange("customer", v)} placeholder="Nama lengkap" required />
             <FormField label="No. HP" value={form.phone} onChange={(v) => handleFormChange("phone", v)} placeholder="08xxx" />
             <FormField label="Tanggal *" type="date" value={form.date} onChange={(v) => handleFormChange("date", v)} required />
-            <FormField label="Destinasi" value={form.destination} onChange={(v) => handleFormChange("destination", v)} placeholder="Kawah Putih, dll" />
+            <FormField label="Jam Mulai *" type="time" value={form.time} onChange={(v) => handleFormChange("time", v)} required />
+            <FormField
+              label="Paket"
+              type="select"
+              value={form.destination}
+              onChange={(v) => handleFormChange("destination", v)}
+              options={[
+                ["short", "Short"],
+                ["medium", "Medium"],
+                ["long", "Long"],
+              ]}
+            />
 
             <FormField
               label="Assign Mobil"
@@ -319,12 +391,21 @@ export default function BookingPage({ cars = [] }) {
                 ["", "-- Pilih Mobil --"],
                 ...availCars.map((c) => {
                   const carName = c.name || c.nama_grup || "";
-                  return [carName, carName];
+                  return [String(c.id), carName];
                 }),
               ]}
             />
 
-            <FormField label="Assign Driver" value={form.driver || ""} onChange={(v) => handleFormChange("driver", v)} placeholder="Nama driver" />
+            <FormField
+              label="Assign Driver"
+              type="select"
+              value={form.driver || ""}
+              onChange={(v) => handleFormChange("driver", v)}
+              options={[
+                ["", "-- Pilih Driver --"],
+                ...drivers.map((d) => [String(d.id), d.nama || d.name || `Driver #${d.id}`]),
+              ]}
+            />
 
             <FormField
               label="Status"
@@ -353,20 +434,20 @@ export default function BookingPage({ cars = [] }) {
             </button>
             <button
               onClick={handleSave}
-              disabled={bentrok}
+              disabled={bentrok || saving}
               style={{
-                background: bentrok ? "#86efac" : "#16a34a",
+                background: bentrok || saving ? "#86efac" : "#16a34a",
                 color: "#fff",
                 border: "none",
                 borderRadius: 9,
                 padding: "9px 20px",
                 fontWeight: 700,
                 fontSize: 14,
-                cursor: bentrok ? "not-allowed" : "pointer",
+                cursor: bentrok || saving ? "not-allowed" : "pointer",
                 fontFamily: "inherit",
               }}
             >
-              {modal.mode === "add" ? "Tambah" : "Simpan"}
+              {saving ? "Menyimpan..." : modal.mode === "add" ? "Tambah" : "Simpan"}
             </button>
           </div>
         </Modal>

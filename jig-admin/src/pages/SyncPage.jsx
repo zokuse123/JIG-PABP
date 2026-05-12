@@ -5,15 +5,12 @@ const STATE = { idle: "idle", loading: "loading", success: "success", error: "er
 
 export default function SyncPage({ syncFromSheets, loading }) {
   const [state, setState]     = useState(STATE.idle);
-  const [result, setResult]   = useState(null);
   const [lastSync, setLastSync] = useState(null);
 
   const handleSync = async () => {
     setState(STATE.loading);
-    setResult(null);
     try {
-      const res = await syncFromSheets();
-      setResult(res);
+      await syncFromSheets();
       setLastSync(new Date().toLocaleString("id-ID"));
       setState(STATE.success);
     } catch {
@@ -37,9 +34,7 @@ export default function SyncPage({ syncFromSheets, loading }) {
           {state === STATE.success && (
             <div style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: 9, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#166534", fontWeight: 600 }}>
               ✅ Sync berhasil!{" "}
-              {result?.simulated
-                ? "1 data simulasi ditambahkan (backend belum tersedia)."
-                : `${result?.count || 0} data baru diterima.`}
+              Data booking berhasil disinkronkan.
             </div>
           )}
           {state === STATE.error && (

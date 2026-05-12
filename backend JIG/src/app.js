@@ -5,6 +5,7 @@ const cors    = require('cors')
 const app     = express()
 
 const db = require('./config/database')
+const { errorHandler, notFound } = require('./middleware/errorHandler')
 
 // ── Services (cara lama, tetap dipakai) ─────────────────────
 const carService        = require('./services/carService')
@@ -44,6 +45,9 @@ app.get('/test-db', async (req, res) => {
 /* =========================
    BOOKINGS
 ========================= */
+/* =========================
+   BOOKINGS
+========================= */
 app.get('/bookings', async (req, res) => {
   try {
     const data = await bookingService.getAllBookings(req.query)
@@ -53,31 +57,75 @@ app.get('/bookings', async (req, res) => {
   }
 })
 
-app.post('/bookings', async (req, res) => {
+app.get('/bookings/:id', async (req, res) => {
   try {
-    const result = await bookingService.createBooking(req.body)
-    res.json({ message: 'Booking berhasil', data: result })
+    const data = await bookingService.getBookingById(req.params.id)
+
+    if (!data) {
+      return res.status(404).json({
+        message: 'Booking tidak ditemukan'
+      })
+    }
+
+    res.json(data)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
+app.post('/bookings', async (req, res) => {
+  try {
+    const result = await bookingService.createBooking(req.body)
+    let data = result
+
+    if (req.body.status !== 'cancel' && req.body.car_id && req.body.driver_id) {
+      await assignmentService.assignManual(result.id, req.body.car_id, req.body.driver_id)
+      data = await bookingService.getBookingById(result.id)
+    }
+
+    res.json({ message: 'Booking berhasil', data })
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message })
+  }
+})
+
 app.put('/bookings/:id', async (req, res) => {
   try {
-    const result = await bookingService.updateBooking(req.params.id, req.body)
+    let result = await bookingService.updateBooking(req.params.id, req.body)
+
+    if (req.body.status !== 'cancel' && req.body.car_id && req.body.driver_id) {
+      await assignmentService.assignManual(req.params.id, req.body.car_id, req.body.driver_id)
+      result = await bookingService.getBookingById(req.params.id)
+    }
+
     res.json({ message: 'Booking berhasil diperbarui', data: result })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(err.statusCode || 500).json({ message: err.message })
   }
 })
 
 // Alias PATCH supaya frontend yang kirim PATCH tidak terkena 404.
 app.patch('/bookings/:id', async (req, res) => {
   try {
-    const result = await bookingService.updateBooking(req.params.id, req.body)
+    let result = await bookingService.updateBooking(req.params.id, req.body)
+
+    if (req.body.status !== 'cancel' && req.body.car_id && req.body.driver_id) {
+      await assignmentService.assignManual(req.params.id, req.body.car_id, req.body.driver_id)
+      result = await bookingService.getBookingById(req.params.id)
+    }
+
     res.json({ message: 'Booking berhasil diperbarui', data: result })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(err.statusCode || 500).json({ message: err.message })
+  }
+})
+
+app.delete('/bookings/:id', async (req, res) => {
+  try {
+    const result = await bookingService.deleteBooking(req.params.id)
+    res.json(result)
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ message: err.message })
   }
 })
 
@@ -150,6 +198,9 @@ app.use('/assignments', assignmentRoutes)
 // Mengaktifkan:
 //   GET /dashboard        → ringkasan (total trip, pemasukan, mobil terlaris)
 //   GET /dashboard/detail → statistik lengkap
+
+app.use(notFound)
+app.use(errorHandler)
 
 /* =========================
    START SERVER
