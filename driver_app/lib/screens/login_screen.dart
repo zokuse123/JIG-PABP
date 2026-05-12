@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
-import '../models/driver.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../widgets/common_widgets.dart';
@@ -110,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Masuk untuk melihat jadwal Anda',
+                        'Masuk untuk melihat tugas trip Anda',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -202,8 +201,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: AppColors.primary.withOpacity(0.2)),
+                    border:
+                        Border.all(color: AppColors.primary.withOpacity(0.2)),
                   ),
                   child: const Row(
                     children: [
@@ -212,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Mode Demo: Gunakan nomor HP berawalan 08 dan password apapun.',
+                          'Gunakan nomor HP driver yang sudah terdaftar admin.',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.primary,
@@ -240,8 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
       prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
       filled: true,
       fillColor: Colors.white,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: AppColors.divider),
@@ -252,8 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide:
-            const BorderSide(color: AppColors.primary, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),

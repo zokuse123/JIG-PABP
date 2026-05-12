@@ -4,9 +4,9 @@ import '../models/booking.dart';
 import '../models/driver.dart';
 
 class ApiService {
-  // Ganti dengan URL backend Anda
-  static const String baseUrl = 'https://your-api.example.com/api';
-  static const bool useDummyData = true; // Set false jika backend sudah siap
+  // IP local network backend Express. Pastikan HP dan laptop satu Wi-Fi.
+  static const String baseUrl = 'http://192.168.18.5:3000/mobile';
+  static const bool useDummyData = false;
 
   String? _token;
 
@@ -19,6 +19,23 @@ class ApiService {
         'Accept': 'application/json',
         if (_token != null) 'Authorization': 'Bearer $_token',
       };
+
+  dynamic _decode(http.Response res) {
+    if (res.body.isEmpty) return null;
+    return jsonDecode(res.body);
+  }
+
+  String _errorMessage(http.Response res, String fallback) {
+    try {
+      final data = _decode(res);
+      if (data is Map<String, dynamic>) {
+        return data['message'] ?? data['error'] ?? fallback;
+      }
+      return fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
 
   // ─── AUTH ────────────────────────────────────────────────
   Future<Driver?> login(String phone, String password) async {
@@ -44,11 +61,12 @@ class ApiService {
       );
 
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
+        final data = _decode(res);
         return Driver.fromJson(data['driver'] ?? data);
       }
-      throw Exception('Login gagal: ${res.statusCode}');
+      throw Exception(_errorMessage(res, 'Nomor HP atau password salah'));
     } catch (e) {
+      if (e is Exception) rethrow;
       throw Exception('Tidak dapat terhubung ke server');
     }
   }
@@ -63,18 +81,20 @@ class ApiService {
     try {
       final query = date != null ? '?date=$date' : '';
       final res = await http.get(
-        Uri.parse('$baseUrl/bookings$query'),
+        Uri.parse('$baseUrl/trips$query'),
         headers: _headers,
       );
 
       if (res.statusCode == 200) {
-        final List data = jsonDecode(res.body)['data'] ?? jsonDecode(res.body);
+        final body = _decode(res);
+        final List data =
+            body is Map<String, dynamic> ? (body['data'] ?? []) : body;
         return data.map((e) => Booking.fromJson(e)).toList();
       }
-      throw Exception('Gagal memuat jadwal');
+      throw Exception(_errorMessage(res, 'Gagal memuat tugas'));
     } catch (e) {
-      // Fallback ke dummy jika error
-      return _dummyBookings();
+      if (e is Exception) rethrow;
+      throw Exception('Tidak dapat terhubung ke server');
     }
   }
 
@@ -87,11 +107,12 @@ class ApiService {
 
     try {
       final res = await http.put(
-        Uri.parse('$baseUrl/booking/$bookingId/status'),
+        Uri.parse('$baseUrl/trip/$bookingId/status'),
         headers: _headers,
         body: jsonEncode({'status': status.value}),
       );
-      return res.statusCode == 200;
+      if (res.statusCode == 200) return true;
+      return false;
     } catch (e) {
       return false;
     }

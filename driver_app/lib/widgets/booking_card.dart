@@ -143,7 +143,7 @@ class _BookingCardState extends State<BookingCard> {
                 InfoRow(
                   icon: Icons.directions_car_rounded,
                   label: 'Mobil',
-                  value: '${booking.carName} · ${booking.carPlate}',
+                  value: '${booking.carName} - ${booking.carPlate}',
                 ),
                 const SizedBox(height: 6),
                 InfoRow(

@@ -20,10 +20,10 @@ class AppStrings {
   static const String appName = 'Driver App';
   static const String login = 'Masuk';
   static const String logout = 'Keluar';
-  static const String schedule = 'Jadwal Hari Ini';
+  static const String schedule = 'Tugas Saya';
   static const String startTrip = 'Mulai Trip';
   static const String endTrip = 'Selesai Trip';
-  static const String noSchedule = 'Tidak ada jadwal hari ini';
+  static const String noSchedule = 'Tidak ada tugas trip';
 }
 
 class AppTextStyles {

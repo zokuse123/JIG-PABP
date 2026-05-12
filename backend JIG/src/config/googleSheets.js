@@ -2,6 +2,7 @@
 // Konfigurasi autentikasi ke Google Sheets API
 
 const { google } = require('googleapis');
+const path = require('path');
 require('dotenv').config();
 
 /**
@@ -9,8 +10,10 @@ require('dotenv').config();
  * Menggunakan Service Account (bukan OAuth user)
  */
 const getGoogleSheetsClient = async () => {
+  const keyFile = path.resolve(process.cwd(), process.env.GOOGLE_KEY_FILE || 'service-account.json');
+
   const auth = new google.auth.GoogleAuth({
-    keyFile: process.env.GOOGLE_KEY_FILE, // path ke file JSON service account
+    keyFile, // path ke file JSON service account
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 

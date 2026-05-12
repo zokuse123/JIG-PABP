@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Gagal memuat jadwal. Tarik untuk refresh.';
+          _errorMessage = 'Gagal memuat tugas. Tarik untuk refresh.';
           _isLoading = false;
         });
       }
@@ -64,8 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: const Text('Keluar?'),
-        content:
-            const Text('Anda akan keluar dari aplikasi. Lanjutkan?'),
+        content: const Text('Anda akan keluar dari aplikasi. Lanjutkan?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -80,8 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(8)),
               elevation: 0,
             ),
-            child: const Text('Keluar',
-                style: TextStyle(color: Colors.white)),
+            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -133,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       const Text(
-                        'Jadwal Hari Ini',
+                        'Tugas Saya',
                         style: AppTextStyles.heading2,
                       ),
                       const Spacer(),
@@ -196,8 +194,8 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white.withOpacity(0.25),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person_rounded,
-                color: Colors.white, size: 24),
+            child:
+                const Icon(Icons.person_rounded, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -224,8 +222,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             onPressed: _logout,
-            icon: const Icon(Icons.logout_rounded,
-                color: Colors.white, size: 22),
+            icon:
+                const Icon(Icons.logout_rounded, color: Colors.white, size: 22),
             tooltip: 'Keluar',
           ),
         ],
@@ -292,12 +290,12 @@ class _HomeScreenState extends State<HomeScreen> {
               size: 64, color: AppColors.primary.withOpacity(0.3)),
           const SizedBox(height: 16),
           const Text(
-            'Tidak Ada Jadwal',
+            'Tidak Ada Tugas',
             style: AppTextStyles.heading2,
           ),
           const SizedBox(height: 8),
           const Text(
-            'Belum ada trip untuk hari ini.',
+            'Belum ada trip yang ditugaskan.',
             style: AppTextStyles.caption,
           ),
         ],
@@ -315,8 +313,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.wifi_off_rounded,
                 size: 64, color: Colors.red.withOpacity(0.4)),
             const SizedBox(height: 16),
-            Text(_errorMessage ?? '', textAlign: TextAlign.center,
-                style: AppTextStyles.body),
+            Text(_errorMessage ?? '',
+                textAlign: TextAlign.center, style: AppTextStyles.body),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _loadBookings,
